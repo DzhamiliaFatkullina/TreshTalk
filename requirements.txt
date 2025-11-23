@@ -6,4 +6,6 @@ pandas
 tqdm
 opencv-python
 scikit-learn
-os
+python-telegram-bot
+requests
+python-dotenv
