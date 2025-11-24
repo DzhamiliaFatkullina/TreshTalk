@@ -66,12 +66,12 @@ def merge_warp_c_folders():
         if not category.is_dir():
             continue
 
-        print(f"📁 Processing category: {category.name}")
+        print(f"Processing category: {category.name}")
 
         train_category_dir = train_crops_dir / category.name
 
         if not train_category_dir.exists():
-            print(f"⚠️ Category {category.name} not found in train_crops, skipping")
+            print(f"Category {category.name} not found in train_crops, skipping")
             continue
 
         for subfolder in category.iterdir():
@@ -82,7 +82,7 @@ def merge_warp_c_folders():
             train_subfolder = train_category_dir / subfolder_name
 
             if not train_subfolder.exists():
-                print(f"⚠️ Subfolder {subfolder_name} not found in train, skipping")
+                print(f"Subfolder {subfolder_name} not found in train, skipping")
                 continue
 
             target_dir = merged_dir / subfolder_name
@@ -111,18 +111,18 @@ def merge_warp_c_folders():
 
                     shutil.copy2(file, target_file)
 
-            print(f"✅ Merged: {subfolder_name}")
+            print(f"Merged: {subfolder_name}")
 
-    print(f"🎉 Merging completed! Result in: {merged_dir}")
+    print(f"Merging completed! Result in: {merged_dir}")
 
-    print("🗑️ Removing original test_crops and train_crops folders...")
+    print("Removing original test_crops and train_crops folders...")
     try:
         shutil.rmtree(test_crops_dir)
-        print("✅ Removed test_crops")
+        print("Removed test_crops")
         shutil.rmtree(train_crops_dir)
-        print("✅ Removed train_crops")
+        print("Removed train_crops")
     except Exception as e:
-        print(f"⚠️ Error removing folders: {e}")
+        print(f"Error removing folders: {e}")
 
 
 def cleanup_warp_directory():
@@ -133,7 +133,7 @@ def cleanup_warp_directory():
         print("WaRP folder not found for cleanup!")
         return
 
-    print("🧹 Cleaning WaRP directory...")
+    print("Cleaning WaRP directory...")
 
     merged_crops_path = None
 
@@ -155,23 +155,23 @@ def cleanup_warp_directory():
         # Move merged_crops to temporary directory
         temp_merged = temp_dir / "merged_crops"
         shutil.move(str(merged_crops_path), str(temp_merged))
-        print("✅ merged_crops moved to temporary folder")
+        print("merged_crops moved to temporary folder")
 
         shutil.rmtree(warp_dir)
-        print("✅ WaRP folder removed")
+        print("WaRP folder removed")
 
         warp_dir.mkdir(parents=True, exist_ok=True)
 
         shutil.move(str(temp_merged), str(warp_dir / "merged_crops"))
-        print("✅ merged_crops returned to cleaned WaRP folder")
+        print("merged_crops returned to cleaned WaRP folder")
 
         shutil.rmtree(temp_dir)
-        print("✅ Temporary folder removed")
+        print("Temporary folder removed")
 
-        print("🎉 WaRP folder successfully cleaned! Only merged_crops remains")
+        print("WaRP folder successfully cleaned! Only merged_crops remains")
 
     except Exception as e:
-        print(f"❌ Error cleaning WaRP folder: {e}")
+        print(f"Error cleaning WaRP folder: {e}")
         if temp_dir.exists():
             if (temp_dir / "merged_crops").exists():
                 shutil.move(str(temp_dir / "merged_crops"),
@@ -188,10 +188,10 @@ def organize_dataset(dataset_name):
     
     config = DATASET_CONFIGS.get(dataset_name)
     if not config:
-        print(f"❌ Configuration for {dataset_name} not found!")
+        print(f"Configuration for {dataset_name} not found!")
         return False
     
-    print(f"\n📁 Organizing dataset: {dataset_name}")
+    print(f"\nOrganizing dataset: {dataset_name}")
     
     # Find source data folder
     source_dir = dataset_dir / config["source_path"]
@@ -208,7 +208,7 @@ def organize_dataset(dataset_name):
             config_classes_lower = [c.lower() for c in config["classes"]]
             
             if class_name_lower not in config_classes_lower:
-                print(f"⚠️ Unknown class: {class_name}, skipping")
+                print(f"Unknown class: {class_name}, skipping")
                 continue
             
             # Find correct class name spelling from configuration
@@ -217,7 +217,7 @@ def organize_dataset(dataset_name):
             target_dir = dataset_dir / correct_class_name
             classes_found.append(correct_class_name)
             
-            print(f"➡️ Processing: {class_name} -> {correct_class_name}")
+            print(f"Processing: {class_name} -> {correct_class_name}")
             
             # If target folder already exists, merge contents
             if target_dir.exists():
@@ -237,26 +237,26 @@ def organize_dataset(dataset_name):
                         shutil.copy2(file_path, target_file)
                         files_copied += 1
                         moved_count += 1
-                print(f"  ✅ Merged {files_copied} files into {correct_class_name}")
+                print(f"  Merged {files_copied} files into {correct_class_name}")
             else:
                 # Simply move the entire folder
                 shutil.move(str(class_dir), str(target_dir))
                 file_count = len([f for f in target_dir.glob("*.*") if f.is_file()])
                 moved_count += file_count
-                print(f"  ✅ Moved {file_count} files to {correct_class_name}")
+                print(f"  Moved {file_count} files to {correct_class_name}")
     
     try:
         current_dir = source_dir
         while current_dir != dataset_dir:
             if current_dir.exists() and not any(current_dir.iterdir()):
                 shutil.rmtree(current_dir)
-                print(f"🗑️ Removed empty folder: {current_dir.name}")
+                print(f"Removed empty folder: {current_dir.name}")
             parent_dir = current_dir.parent
             if parent_dir == current_dir:  # Reached root
                 break
             current_dir = parent_dir
     except Exception as e:
-        print(f"⚠️ Failed to remove source folders: {e}")
+        print(f"Failed to remove source folders: {e}")
     
     files_removed = 0
     for pattern in config["remove_files"]:
@@ -265,14 +265,14 @@ def organize_dataset(dataset_name):
                 if file_path.is_file():
                     file_path.unlink()
                     files_removed += 1
-                    print(f"🗑️ Removed file: {file_path.name}")
+                    print(f"Removed file: {file_path.name}")
             except Exception as e:
-                print(f"⚠️ Failed to remove {file_path.name}: {e}")
+                print(f"Failed to remove {file_path.name}: {e}")
     
     if files_removed > 0:
-        print(f"🗑️ Removed {files_removed} system files")
+        print(f"Removed {files_removed} system files")
     
-    print(f"\n🎉 Organization of {dataset_name} completed!")
+    print(f"\nOrganization of {dataset_name} completed!")
     return True
 
 def main():
@@ -286,7 +286,7 @@ def main():
         print(f"Downloading {name} -> {out_dir}")
         api.dataset_download_files(slug, path=str(
             out_dir), unzip=True, quiet=False)
-        print(f"✅ Done: {name}")
+        print(f"Done: {name}")
 
     if "WaRP" in DATASETS:
         merge_warp_c_folders()

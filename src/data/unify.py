@@ -10,7 +10,7 @@ class DatasetUnifier:
     def __init__(self, raw_dir="data/raw", unified_dir="data/unified"):
         self.raw_dir = Path(raw_dir)
         self.unified_dir = Path(unified_dir)
-        self.manifest_path = self.unified_dir / "manifest.csv"
+        self.manifest_path = self.unified_dir / "manifestKaggle.csv"
         self.quality_analyzer = ImageQualityAnalyzer()
 
         self.unified_classes = {
@@ -194,17 +194,17 @@ class DatasetUnifier:
         """Universal function for processing any dataset"""
         config = self.dataset_configs.get(dataset_key)
         if not config:
-            print(f"❌ Configuration for {dataset_key} not found!")
+            print(f"Configuration for {dataset_key} not found!")
             return pd.DataFrame()
 
         dataset_path = self.raw_dir / config['path']
         records = []
 
         if not dataset_path.exists():
-            print(f"❌ Path not found: {dataset_path}")
+            print(f"Path not found: {dataset_path}")
             return pd.DataFrame()
 
-        print(f"📁 Processing {dataset_key} from: {dataset_path}")
+        print(f"Processing {dataset_key} from: {dataset_path}")
 
         total_images = 0
         classes_processed = 0
@@ -221,11 +221,11 @@ class DatasetUnifier:
 
                 if not unified_class:
                     print(
-                        f"⚠️ Unknown class in {dataset_key}: {original_class}")
+                        f"Unknown class in {dataset_key}: {original_class}")
                     continue
 
                 print(
-                    f"  📂 Processing class: {original_class} -> {unified_class}")
+                    f"  Processing class: {original_class} -> {unified_class}")
 
                 image_count = 0
                 for pattern in config['file_patterns']:
@@ -289,11 +289,11 @@ class DatasetUnifier:
                         image_count += 1
                         total_images += 1
 
-                print(f"    ✅ {original_class}: {image_count} images")
+                print(f"    {original_class}: {image_count} images")
                 classes_processed += 1
 
         print(
-            f"🎉 Processing {dataset_key} completed: {total_images} images in {classes_processed} classes")
+            f"Processing {dataset_key} completed: {total_images} images in {classes_processed} classes")
         return pd.DataFrame(records)
 
     def assign_splits(self, df, train_size=0.6, val_size=0.2, test_size=0.2):
@@ -342,7 +342,7 @@ class DatasetUnifier:
             print(f"\n{'='*50}")
             df = self._process_dataset(dataset_key)
             all_data = pd.concat([all_data, df], ignore_index=True)
-            print(f"✅ {dataset_key}: {len(df)} images")
+            print(f"{dataset_key}: {len(df)} images")
             print(f"{'='*50}")
 
         print(f"\nTotal records collected: {len(all_data)}")
@@ -374,28 +374,6 @@ class DatasetUnifier:
         print(f"Average saturation: {all_data['saturation'].mean():.3f}")
         print(f"Average noise: {all_data['noise_score'].mean():.3f}")
         print(f"Average blur: {all_data['blur_score'].mean():.3f}")
-
-        # RL statistics
-        print(f"\n=== RL-specific Statistics ===")
-        print(
-            f"Images needing processing: {all_data['needs_any_processing'].sum()} ({all_data['needs_any_processing'].mean()*100:.1f}%)")
-        print(f"Quality level distribution:")
-        quality_dist = all_data['quality_level'].value_counts().sort_index()
-        for level, count in quality_dist.items():
-            level_names = {0: 'Low', 1: 'Medium', 2: 'High'}
-            print(
-                f"  - {level_names[level]}: {count} images ({count/len(all_data)*100:.1f}%)")
-
-        # Problem statistics
-        print(f"\n=== Common Problems ===")
-        problem_cols = [col for col in all_data.columns if col.startswith(
-            'needs_') or col.startswith('has_')]
-        problem_stats = []
-        for col in problem_cols:
-            count = all_data[col].sum()
-            if count > 0:
-                percentage = count/len(all_data)*100
-                problem_stats.append((col, count, percentage))
 
         return len(all_data)
 

@@ -7,7 +7,7 @@ from pathlib import Path
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, classification_report
-from src.models.baselines import build_resnet18
+from src.models.baselines import MODEL_BUILDERS
 from src.models.train import WasteDataset
 
 
@@ -38,10 +38,12 @@ def load_data():
 
 def load_model(device, num_classes):
     current_dir = Path(__file__).parent
-    model_path = current_dir / "baseline.pth"
+    model_path = current_dir / "best_model.pth"
+
+    checkpoint = torch.load(model_path, map_location=device)
     
-    model = build_resnet18(num_classes=num_classes, pretrained=False)
-    model.load_state_dict(torch.load(model_path, map_location=device))
+    model = MODEL_BUILDERS[checkpoint['model_name']](num_classes=num_classes, pretrained=False)
+    model.load_state_dict(checkpoint['state_dict'])
     model.to(device)
     model.eval()
     return model
