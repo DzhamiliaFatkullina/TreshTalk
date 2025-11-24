@@ -12,8 +12,8 @@ from telegram.ext import (
     filters,
 )
 
-from image_result import detect_and_classify
-from llm_text_result import get_text
+from src.bot.image_result import detect_and_classify
+from src.bot.llm_text_result import get_text
 
 
 load_dotenv()
