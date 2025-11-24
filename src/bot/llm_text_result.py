@@ -82,6 +82,7 @@ Rules for your response:
 6. No lists, no bullet points, no section numbers, no markdown.
 7. Avoid repeating identical phrases such as “this item can be recycled” for each item. Merge information naturally.
 8. The final answer must be directly useful for a real person standing in front of trash bins.
+9. Text should be in English
 
 Your goal is to produce the most practically helpful and specific instruction possible, even when regional rules are unknown.
 """
@@ -126,19 +127,34 @@ def call_yandex_gpt(user_text: str, model_name: str) -> str:
 # PUBLIC FUNCTION USED BY BOT
 # ==============================
 
-def get_text(classifications: List[Dict]) -> str:
-    """
-    classifications = [
-        {"label": "plastic", "confidence": 0.87},
-        {"label": "metal", "confidence": 0.65}
-    ]
-    """
+def get_text(classifications):
+    texts = []
+    detected_count = len(classifications)
+    
+    if detected_count == 0:
+        summary = "No objects were detected in the image."
+    else:
+        items = []
+        for i, agg in enumerate(classifications):
+            yolo = agg["yolo"]["label"]
+            base = agg["baseline"]["label"]
+            items.append(f"{yolo} ({base})")
+        
+        if detected_count == 1:
+            summary = f"Detected 1 object: {items[0]}."
+        else:
+            summary = f"Detected {detected_count} objects: {', '.join(items[:-1])} and {items[-1]}.\n\n"
 
-    text_for_gpt = "Detected items:\n"
-    for c in classifications:
-        text_for_gpt += f"- {c['label']} (confidence {c['confidence']:.2f})\n"
-
-    print(text_for_gpt)
-
-    return call_yandex_gpt(text_for_gpt, model_name="yandexgpt")
-    # return "демн"
+    for i, agg in enumerate(classifications):
+        yolo_label = agg["yolo"]["label"]
+        yolo_conf = agg["yolo"]["confidence"]
+        base_label = agg["baseline"]["label"]
+        base_conf = agg["baseline"]["confidence"]
+        block = (
+            f"Object #{i+1}:\n"
+            f" - object: {yolo_label} ({yolo_conf:.2f})\n"
+            f" - class: {base_label} ({base_conf:.2f})"
+        )
+        texts.append(block)
+    
+    return summary + call_yandex_gpt(str("\n\n".join(texts)), model_name="yandexgpt")
