@@ -237,14 +237,8 @@ async def process_image_file(update: Update, context: ContextTypes.DEFAULT_TYPE,
         
         # Отправляем результат
         with open(annotated_path, "rb") as f:
-            caption_prefix = f"✅ Analysis complete! Detected: {', '.join(classifications) if classifications else 'No objects detected'}"
-            
-            if len(text_instruction) <= 500:
-                full_caption = f"{caption_prefix}\n\n{text_instruction}"
-                await message.reply_photo(photo=InputFile(f), caption=full_caption)
-            else:
-                await message.reply_photo(photo=InputFile(f), caption=caption_prefix)
-                await message.reply_text(text_instruction)
+            full_caption = f"{text_instruction}"
+            await message.reply_photo(photo=InputFile(f), caption=full_caption)
                 
     except Exception as e:
         # Пытаемся удалить сообщение о прогрессе в случае ошибки

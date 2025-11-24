@@ -26,6 +26,9 @@ def detect_and_classify(image_path: str):
     annotated_path = image_path + ".annotated.jpg"
     copyfile(image_path, annotated_path)
 
-    classifications = {"plastic": 0.88}
+    classifications = [
+        {"label": "plastic", "confidence": 0.87},
+        {"label": "metal", "confidence": 0.65}
+    ]
 
     return annotated_path, classifications
