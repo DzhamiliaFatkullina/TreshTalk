@@ -6,7 +6,7 @@ from typing import List, Dict, Optional, Tuple
 import json
 from datetime import datetime
 
-from src.detection.detector import GroundingDINODetector
+from src.detection.detector import CVDetector
 from src.models.baselines import MODEL_BUILDERS
 
 
@@ -14,16 +14,16 @@ class WasteDetectionClassificationPipeline:
     """
     Complete waste detection and classification pipeline
     Implements the desired workflow:
-    Input Image → Grounding DINO → Bounding Boxes + Crops → Classifier → Results
+    Input Image → CV Detector → Bounding Boxes + Crops → Classifier → Results
     """
     
-    def __init__(self, detector: GroundingDINODetector, classifier_model, 
+    def __init__(self, detector: CVDetector, classifier_model, 
                  class_names: List[str], device: str):
         """
         Initialize pipeline
         
         Args:
-            detector: Grounding DINO detector instance
+            detector: CVDetector detector instance
             classifier_model: Trained waste classification model
             class_names: List of waste class names
             device: Device to run inference on
@@ -33,18 +33,16 @@ class WasteDetectionClassificationPipeline:
         self.class_names = class_names
         self.device = device
         
-        print(f"✅ Pipeline initialized on device: {device}")
+        print(f"Pipeline initialized on device: {device}")
         print(f"Class names: {class_names}")
     
-    def process_image(self, image_path: str, 
-                     detection_confidence: float = 0.35,
+    def process_image(self, image_path: str,
                      classification_confidence: float = 0.5) -> Dict:
         """
         Process single image through complete pipeline
         
         Args:
             image_path: Path to input image
-            detection_confidence: Minimum confidence for detection
             classification_confidence: Minimum confidence for classification
             
         Returns:
@@ -55,10 +53,10 @@ class WasteDetectionClassificationPipeline:
         # Load image
         image = cv2.imread(image_path)
         if image is None:
-            raise ValueError(f"❌ Could not load image from {image_path}")
+            raise ValueError(f"Could not load image from {image_path}")
         
-        # Step 1: Grounding DINO Detection
-        print("Step 1: Detecting objects with Grounding DINO...")
+        # Step 1: Grounding CV Detector
+        print("Step 1: Detecting objects with CV Detector...")
         detections, annotated_image, labels = self.detector.detect(image)
         
         # Step 2: Extract object crops
@@ -93,7 +91,6 @@ class WasteDetectionClassificationPipeline:
                             'class': class_name,
                             'class_id': predicted_class,
                             'confidence': confidence_value,
-                            'detection_label': labels[i] if i < len(labels) else 'unknown'
                         }
                         classification_results.append(result)
                         
@@ -112,14 +109,13 @@ class WasteDetectionClassificationPipeline:
             'detection_stats': {
                 'total_detected': len(crops_with_bbox),
                 'total_classified': len(classification_results),
-                'detection_confidence_threshold': detection_confidence,
                 'classification_confidence_threshold': classification_confidence
             },
             'objects': classification_results,
             'class_distribution': self._calculate_class_distribution(classification_results)
         }
         
-        print(f"✅ Processing complete: {len(classification_results)} objects classified")
+        print(f"Processing complete: {len(classification_results)} objects classified")
         return final_results
     
     def _calculate_class_distribution(self, results: List[Dict]) -> Dict[str, int]:
@@ -207,7 +203,6 @@ class WasteDetectionClassificationPipeline:
             'trash': (0, 255, 255),      # Yellow
             'battery': (255, 165, 0),    # Orange
             'clothes': (128, 0, 128),    # Purple
-            'lamp': (255, 192, 203),     # Pink
             'biological': (165, 42, 42)  # Brown
         }
         return color_map.get(class_name, (128, 128, 128))  # Gray for unknown
@@ -241,14 +236,14 @@ def create_complete_pipeline(device: str = None) -> WasteDetectionClassification
     
     # Define class names (should match your training)
     class_names = ['cardboard', 'paper', 'plastic', 'metal', 'glass', 
-                   'trash', 'battery', 'clothes', 'lamp', 'biological']
+                   'trash', 'battery', 'clothes', 'biological']
     
     # Step 1: Load classifier model
     print("Step 1: Loading classifier model...")
     model_path = Path(__file__).parent.parent / "models" / "best_model.pth"
     
     if not model_path.exists():
-        raise FileNotFoundError(f"❌ Model file not found: {model_path}")
+        raise FileNotFoundError(f"Model file not found: {model_path}")
     
     checkpoint = torch.load(model_path, map_location=device)
     model_name = checkpoint.get('model_name', 'resnet18')
@@ -260,11 +255,11 @@ def create_complete_pipeline(device: str = None) -> WasteDetectionClassification
     classifier.load_state_dict(checkpoint['state_dict'])
     classifier.to(device)
     classifier.eval()
-    print(f"✅ Classifier loaded: {model_name}")
+    print(f"Classifier loaded: {model_name}")
     
     # Step 2: Initialize detector
     print("Step 2: Initializing detector...")
-    detector = GroundingDINODetector(device=device)
+    detector = CVDetector(device=device)
     
     # Step 3: Create pipeline
     print("Step 3: Creating pipeline...")

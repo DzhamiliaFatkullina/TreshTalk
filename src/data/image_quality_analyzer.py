@@ -10,6 +10,12 @@ class ImageQualityAnalyzer:
     """Image quality analyzer for RL preprocessing system using OpenCV"""
     
     def __init__(self):
+        """
+        Initialize image quality analyzer
+
+        Sets default quality thresholds for brightness, contrast, edge, noise, blur, saturation, entropy, color balance, and exposure
+        """
+        
         self.quality_thresholds = {
             'brightness_ideal_range': (0.4, 0.6),
             'contrast_min': 0.15,
