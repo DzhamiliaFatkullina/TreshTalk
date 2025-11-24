@@ -1,34 +1,65 @@
-"""
-image_result.py
-Responsible only for: 
-- loading model
-- running inference
-- returning: (annotated_image_path, classifications_dict)
-"""
-
 import os
-import json
-from shutil import copyfile
+from pathlib import Path
+from PIL import Image
+
+from src.cv.detector import YoloDetector, SUPPORTED_WASTE_CLASSES
+from src.cv.classifier import WasteClassifier
+from src.cv.utils.draw import draw_boxes
+
+
+# --------------- GLOBAL LOAD (best practice) -------------------
+YOLO_MODEL = YoloDetector("src/cv/yolo/yolov8l.pt")
+CLASSIFIER = WasteClassifier("src/models/baseline.pth", model_name="resnet18")
+# ---------------------------------------------------------------
 
 
 def detect_and_classify(image_path: str):
     """
-    INPUT: path to input image
+    INPUT:
+        image_path: str
     RETURNS:
-        annotated_path: path to image with detections drawn
-        classifications: dict like {"plastic": 0.88}
+        annotated_path: str
+        classifications: list of dicts -> [{"label": "...", "confidence": ...}]
     """
 
-    # ------------------- PLACEHOLDER -------------------
-    # TODO: Load model.pth once globally, not inside the function.
-    # TODO: Run inference, draw boxes, save annotated image.
+    # ---------------- YOLO DETECTION ----------------
+    detections = YOLO_MODEL.detect(image_path)
+
+    if not detections:
+        # если ничего не нашли — просто вернуть копию
+        annotated = image_path + ".annotated.jpg"
+        Image.open(image_path).save(annotated)
+        return annotated, []
+
+    classifier_results = []
+
+    # ---------------- CROP & CLASSIFY ----------------
+    img = Image.open(image_path).convert("RGB")
+    w, h = img.size
+
+    for det in detections:
+        x1, y1, x2, y2 = det["bbox"]
+
+        # аккуратный crop
+        x1 = max(0, int(x1))
+        y1 = max(0, int(y1))
+        x2 = min(w, int(x2))
+        y2 = min(h, int(y2))
+
+        crop = img.crop((x1, y1, x2, y2))
+
+        # классификация только если подходит под категории мусора
+        clf = CLASSIFIER.predict(crop)
+        classifier_results.append(clf)
+
+    # ---------------- DRAW FINAL IMAGE ----------------
+    annotated_image = draw_boxes(image_path, detections, classifier_results)
 
     annotated_path = image_path + ".annotated.jpg"
-    copyfile(image_path, annotated_path)
+    annotated_image.save(annotated_path, quality=95)
 
-    classifications = [
-        {"label": "plastic", "confidence": 0.87},
-        {"label": "metal", "confidence": 0.65}
-    ]
+    # финальная агрегация
+    # берем лучший класс по первому объекту (или все)
+    final_classifications = classifier_results[0]
 
-    return annotated_path, classifications
+    return annotated_path, final_classifications

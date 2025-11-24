@@ -141,3 +141,4 @@ def get_text(classifications: List[Dict]) -> str:
     print(text_for_gpt)
 
     return call_yandex_gpt(text_for_gpt, model_name="yandexgpt")
+    # return "демн"
