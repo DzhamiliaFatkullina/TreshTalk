@@ -1,67 +1,149 @@
-# TreshTalk
+# TrashTalk: Intelligent Waste Detection and Classification System
 
-An RL-powered system that selects optimal preprocessing operations to improve waste image classification accuracy.
+TrashTalk is a comprehensive computer vision system designed for automatic detection and classification of waste objects in images. The project combines state-of-the-art object detection with deep learning classification to identify various types of recyclable and non-recyclable materials with high accuracy.
 
----
+## Project Overview
 
-### Overview
+TrashTalk helps automate waste sorting by identifying different types of trash in images. It can detect multiple waste items in a single photo and classify them into categories like plastic, paper, metal, glass, and special items like batteries.
 
-The goal of this project is to build an intelligent system that classifies waste items (plastic, glass, paper, metal, cardboard, trash) from images, while dynamically adapting the image preprocessing pipeline using reinforcement learning (RL). 
+The system uses proven AI models that have been trained on many waste images, making it accurate and reliable for real-world use. Whether you're taking photos of recycling bins or individual items, TrashTalk can quickly tell you what type of waste each object is.
 
-The assistant classifies waste items into appropriate categories and guides the user interactively via Telegram bot.
-Instead of using a fixed preprocessing strategy (resize, normalize, etc.), we propose an RL agent that chooses a sequence of preprocessing operations (e.g., rotation, brightness adjustment, noise removal, cropping) to maximize the classification accuracy of a CNN model.
+## Key Features
 
----
+- **Multi-stage Pipeline**: Implements a sequential workflow of object detection followed by fine-grained classification
+- **Multiple Model Support**: Includes various CNN architectures (ResNet, EfficientNet, MobileNet, ConvNeXt) for flexible deployment
+- **Comprehensive Dataset**: Unified dataset from multiple public sources with extensive quality analysis
+- **Quality Assessment**: Built-in image quality evaluation for preprocessing optimization
+- **Modular Design**: Clean separation of components for easy maintenance and extension
 
-## State of the Art
+## System Architecture
 
-**Key References:**
-- **TrashNet Dataset**: Standard benchmark with 6 waste categories.
-- **EfficientNet/ResNet**: SOTA for waste classification.
-- **Interactive Assistants:** Limited prototypes exist, but none combine RL-based preprocessing with dialogue.
+The pipeline follows a structured approach:
 
-**Our Innovation:** RL-driven adaptive preprocessing + interactive chatbot guidance.
+1. **Object Detection**: Grounding DINO identifies potential waste objects in input images
+2. **Region Extraction**: Bounding boxes are used to crop detected objects
+3. **Classification**: Pre-trained models classify each crop into specific waste categories
+4. **Results Aggregation**: Combines detection and classification results with confidence scores
 
----
+## Supported Waste Categories
 
-## Datasets
+The system classifies objects into 9 unified categories:
+- Cardboard
+- Paper  
+- Plastic
+- Metal
+- Glass
+- General Trash
+- Batteries
+- Clothing/Textiles
+- Biological Waste
 
-**Core Dataset:**  
-TrashNet (2,500 images, 6 classes: glass, paper, cardboard, plastic, metal, trash)
+## Installation and Setup
 
-**Extended Classes & Sources:**  
-- **Batteries:** RecyBat24 (lithium-ion battery types)  
-- **Lamps:** Adapted CIFAR-100 (lamp class → detection annotations)  
-- **Industrial Objects:** WaRP (28 sub-categories for robustness testing)  
-- **Generalization:** Garbage Classification (12 classes, 15K images) for broader coverage  
+### Prerequisites
+- Python 3.8+
+- PyTorch 1.12+
+- OpenCV
+- Kaggle API (for dataset download)
 
-**Annotation Enhancements:**  
-- Material properties (flexibility, transparency)  
-- Surface conditions (food residues, damage)  
-- Object size and geometric attributes  
-- Synthetic data generation for rare classes  
+### Quick Start
 
----
+```bash
+# Clone the repository
+git clone https://github.com/meldilen/TreshTalk.git
+cd trashtalk
 
-## Success Metrics
+# Install dependencies
+pip install -r requirements.txt
 
-| Metric | Target | Evaluation Method |
-|--------|--------|-------------------|
-| **Classification Accuracy** | ≥90% (general)<br>≥85% (hazardous) | Test set performance |
-| **Preprocessing Improvement** | +3% over baseline | RL vs static pipeline A/B test |
-| **Inference Speed** | <500 ms/image | GPU latency measurement |
-| **Detection Performance** | mAP ≥0.85 | COCO evaluation metrics |
-| **User Satisfaction** | ≥70% positive feedback | Telegram bot feedback system |
-| **Deployment Ready** | Functional Telegram bot | End-to-end testing |
+# Download and prepare datasets
+python src/data/download_kaggle.py
 
-**Technical Benchmarks:**  
-- Real-time capability: ≥10 FPS on edge devices  
-- Robustness: Maintain performance under lighting/occlusion variations  
-- Model Size: <500MB for deployment feasibility  
+# Unify datasets with quality analysis
+python src/data/unify.py
 
----
+# Train model comparison
+python src/models/train_comparison.py
 
-## Collaborators
+# Run inference
+python src/pipeline/pipeline.py
+```
 
-- Dzhamilia Fatkullina (`d.fatkullina@innopolis.university`)
-- Dziyana Melnikava (`dz.melnikava@innopolis.university`)
+## Model Training
+
+The project includes a comprehensive model comparison framework that evaluates multiple architectures:
+
+```python
+from src.models.train_comparison import run_model_comparison
+
+# Compare all supported models
+results, num_classes = run_model_comparison()
+```
+
+Supported models include ResNet-18/50, MobileNetV3, EfficientNet-B0/B2, and ConvNeXt-Tiny with automatic selection of the best performing architecture based on validation accuracy and model size.
+
+## Dataset Management
+
+The system automatically handles dataset acquisition and unification from multiple sources:
+
+- **Automated Download**: Fetches datasets from Kaggle using the official API
+- **Intelligent Unification**: Maps diverse labeling schemes to unified categories
+- **Quality Analysis**: Performs comprehensive image quality assessment
+- **Stratified Splitting**: Ensures balanced train/validation/test splits
+
+## Usage Examples
+
+### Basic Inference
+
+```python
+from src.pipeline.pipeline import create_complete_pipeline
+
+# Initialize the complete pipeline
+pipeline = create_complete_pipeline()
+
+# Process an image
+results = pipeline.process_image("path/to/image.jpg")
+
+# Visualize results
+pipeline.visualize_results("path/to/image.jpg", results)
+```
+
+### Custom Training
+
+```python
+from src.models.baselines import MODEL_BUILDERS
+
+# Initialize a custom model
+model = MODEL_BUILDERS['efficientnet_b2'](num_classes=10, pretrained=True)
+```
+
+## Project Structure
+
+```
+TrashTalk/
+├── src/
+│   ├── data/           # Dataset download and unification
+│   ├── models/         # Model architectures and training
+│   ├── detection/      # Object detection components
+│   └── pipeline.py       # End-to-end pipeline
+├── data/
+│   ├── raw/           # Original datasets
+│   └── unified/       # Processed unified dataset
+└── reports/           # Training results and comparisons
+```
+
+## Performance
+
+The system achieves strong performance across multiple metrics:
+- High classification accuracy on diverse waste types
+- Robust detection of multiple objects per image
+- Efficient inference suitable for real-time applications
+- Comprehensive quality assessment for input validation
+
+## Contributing
+
+We welcome contributions to improve TrashTalk:
+- Report bugs and issues
+- Suggest new features or improvements
+- Add support for additional waste categories
+- Improve model performance and efficiency
