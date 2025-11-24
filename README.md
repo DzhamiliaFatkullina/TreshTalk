@@ -20,7 +20,7 @@ The system uses proven AI models that have been trained on many waste images, ma
 
 The pipeline follows a structured approach:
 
-1. **Object Detection**: Grounding DINO identifies potential waste objects in input images
+1. **Object Detection**: YOLO-v8  identifies potential waste objects in input images
 2. **Region Extraction**: Bounding boxes are used to crop detected objects
 3. **Classification**: Pre-trained models classify each crop into specific waste categories
 4. **Results Aggregation**: Combines detection and classification results with confidence scores
@@ -146,4 +146,5 @@ We welcome contributions to improve TrashTalk:
 - Report bugs and issues
 - Suggest new features or improvements
 - Add support for additional waste categories
+
 - Improve model performance and efficiency
